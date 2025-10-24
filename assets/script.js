@@ -303,12 +303,19 @@
       { x, y, color: a },
       { x: x + ox, y: y + oy, color: b }
     ];
+
+    // If any part is out-of-bounds (including above the top), end the game and don't place
     for (const c of cells) {
-      if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
-        p.grid[c.y][c.x] = c.color;
-      } else {
+      if (c.x < 0 || c.x >= COLS || c.y < 0 || c.y >= ROWS) {
         endGame(p);
+        p.active = null;
+        return;
       }
+    }
+
+    // Place both halves
+    for (const c of cells) {
+      p.grid[c.y][c.x] = c.color;
     }
     p.active = null;
     resolveBoard(p);

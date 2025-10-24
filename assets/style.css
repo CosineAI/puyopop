@@ -15,10 +15,25 @@ body {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  /* Kawaii pastel rainbow background with subtle gradients */
+
+  /* Highly pixelated rainbow mosaic (blocky stripes in both axes) */
   background:
-    radial-gradient(1200px 800px at 20% 0%, rgba(255,235,240,0.7) 0%, rgba(255,235,240,0.35) 35%, rgba(255,235,240,0.15) 70%, rgba(255,235,240,0.05) 100%),
-    conic-gradient(from 180deg at 50% 50%, #ffd1dc, #ffe8a3, #b8ffb3, #a3e8ff, #d1a3ff, #ffd1dc);
+    repeating-linear-gradient(90deg,
+      #ffd1dc 0px, #ffd1dc 32px,
+      #ffe8a3 32px, #ffe8a3 64px,
+      #b8ffb3 64px, #b8ffb3 96px,
+      #a3e8ff 96px, #a3e8ff 128px,
+      #d1a3ff 128px, #d1a3ff 160px
+    ),
+    repeating-linear-gradient(0deg,
+      #ffd1dc 0px, #ffd1dc 32px,
+      #ffe8a3 32px, #ffe8a3 64px,
+      #b8ffb3 64px, #b8ffb3 96px,
+      #a3e8ff 96px, #a3e8ff 128px,
+      #d1a3ff 128px, #d1a3ff 160px
+    ),
+    radial-gradient(1200px 800px at 20% 0%, rgba(255,235,240,0.6) 0%, rgba(255,235,240,0.25) 35%, rgba(255,235,240,0.12) 70%, rgba(255,235,240,0.04) 100%);
+  background-blend-mode: screen, screen, normal;
   background-attachment: fixed;
 }
 
@@ -251,7 +266,7 @@ footer {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 8pxpx;
+  margin-bottom: 8px;
 }
 
 .controls button {
