@@ -15,6 +15,13 @@
     '#ffa502': 'blinking',      // yellow
     '#a55eea': 'smallFocused'   // purple
   };
+  const EYE_IRIS_COLORS = {
+    '#ff4757': { inner: '#ff8896', mid: '#e03a4d', rim: '#8d1f2d' },
+    '#2ed573': { inner: '#7ef2b9', mid: '#28c987', rim: '#167350' },
+    '#1e90ff': { inner: '#7fc1ff', mid: '#2e79d9', rim: '#184278' },
+    '#ffa502': { inner: '#ffd38a', mid: '#f1a300', rim: '#9a5c00' },
+    '#a55eea': { inner: '#d0a7ff', mid: '#7c4fd8', rim: '#412283' }
+  };
   let animTimeMs = 0;
 
   // Timing
@@ -40,9 +47,9 @@
   function drawCell(g, x, y, color, size) {
     const cx = x + size / 2;
     const cy = y + size / 2;
-    const r = (size * 0.45);
+    const r = size * 0.45;
 
-    // Blob base: round and shiny
+    // Blob base
     g.save();
     g.beginPath();
     g.arc(cx, cy, r, 0, Math.PI * 2);
@@ -74,50 +81,47 @@
     g.lineWidth = Math.max(1, size * 0.03);
     g.strokeStyle = 'rgba(255,255,255,0.10)';
     g.stroke();
-
     g.restore();
 
-    // Eyes (skip if style not defined, e.g., garbage)
+    // Eyes
     const style = EYE_STYLE_BY_COLOR[color];
     if (!style) return;
 
+    const irisPalette = EYE_IRIS_COLORS[color] || { inner: '#ffffff', mid: '#cfcfcf', rim: '#7f7f7f' };
     const t = animTimeMs || 0;
-    const seed = ((x * 97) ^ (y * 131)) % 1000; // deterministic per position
+    const seed = ((x * 97) ^ (y * 131)) % 1000;
 
-    // Eye positions
-    const eyeDY = r * 0.05;
-    const eyeDX = r * 0.45;
-    const baseEyeR = r * 0.22;
+    const eyeDY = r * 0.04;
+    const eyeDX = r * 0.42;
+    const baseEyeR = r * 0.24;
 
-    // Derive params by style
     let leftOpen = 1, rightOpen = 1;
     let eyeR = baseEyeR;
-    let pupilR = eyeR * 0.45;
+    let pupilR = eyeR * 0.44;
     let leftOffset = { dx: 0, dy: 0 };
     let rightOffset = { dx: 0, dy: 0 };
 
     if (style === 'sleepy') {
-      leftOpen = rightOpen = 0.55;
-      pupilR = eyeR * 0.35;
+      leftOpen = rightOpen = 0.5;
+      pupilR = eyeR * 0.33;
     } else if (style === 'blinking') {
-      // periodic blink with slight desync
-      const phaseL = ((t + seed * 3) / 1000) % 4;
-      const phaseR = ((t + seed * 5) / 1000) % 4;
+      const phaseL = ((t + seed * 3) / 900) % 4;
+      const phaseR = ((t + seed * 5) / 900) % 4;
       const blinkFn = (ph) => (ph < 0.08 ? 0 : ph < 0.16 ? 0.2 : 1);
       leftOpen = blinkFn(phaseL);
       rightOpen = blinkFn(phaseR);
     } else if (style === 'bigCute') {
-      eyeR = baseEyeR * 1.15;
-      pupilR = eyeR * 0.5;
+      eyeR = baseEyeR * 1.18;
+      pupilR = eyeR * 0.52;
       leftOffset.dy = -eyeR * 0.1;
       rightOffset.dy = -eyeR * 0.1;
     } else if (style === 'smallFocused') {
-      eyeR = baseEyeR * 0.75;
-      pupilR = eyeR * 0.35;
+      eyeR = baseEyeR * 0.78;
+      pupilR = eyeR * 0.36;
       leftOffset.dx = eyeR * 0.10;
       rightOffset.dx = -eyeR * 0.10;
     } else if (style === 'wandering') {
-      const ang = ((t + seed * 7) / 1000) * Math.PI * 2;
+      const ang = ((t + seed * 7) / 1200) * Math.PI * 2;
       const roam = eyeR * 0.18;
       leftOffset.dx = Math.cos(ang) * roam;
       leftOffset.dy = Math.sin(ang) * roam * 0.6;
@@ -125,46 +129,102 @@
       rightOffset.dy = Math.sin(ang + 0.6) * roam * 0.6;
     }
 
-    // Draw single eye helper with opening fraction
+    function drawSparkle(sx, sy, rr) {
+      g.save();
+      g.translate(sx, sy);
+      g.rotate(-0.4);
+      g.beginPath();
+      g.moveTo(0, -rr);
+      g.lineTo(rr * 0.35, -rr * 0.35);
+      g.lineTo(rr, 0);
+      g.lineTo(rr * 0.35, rr * 0.35);
+      g.lineTo(0, rr);
+      g.lineTo(-rr * 0.35, rr * 0.35);
+      g.lineTo(-rr, 0);
+      g.lineTo(-rr * 0.35, -rr * 0.35);
+      g.closePath();
+      g.fillStyle = 'rgba(255,255,255,0.92)';
+      g.fill();
+      g.restore();
+    }
+
     function drawEye(ex, ey, open, xOffset, yOffset) {
       const eWhiteR = eyeR;
-      // Eye white with clip to simulate eyelid opening
+      const topLash = Math.max(1, size * (style === 'sleepy' ? 0.075 : 0.06));
+      const bottomLash = Math.max(1, size * 0.02);
+
+      // Eye white (ellipse scaled by open)
       g.save();
       g.beginPath();
       g.arc(ex, ey, eWhiteR, 0, Math.PI * 2);
-      g.closePath();
       g.clip();
-      // Clip rect from center downward based on open fraction
-      const h = Math.max(0, eWhiteR * 2 * open);
+
+      g.save();
+      const vScale = 0.65 + 0.35 * Math.max(0, Math.min(open, 1));
+      g.translate(ex, ey);
+      g.scale(1, vScale);
       g.beginPath();
-      g.rect(ex - eWhiteR, ey - eWhiteR, eWhiteR * 2, h);
+      g.arc(0, 0, eWhiteR, 0, Math.PI * 2);
       g.closePath();
       g.fillStyle = 'white';
       g.fill();
+      g.restore();
 
-      // Pupil
+      // Iris
       if (open > 0.08) {
         const px = ex + (xOffset || 0);
-        const py = ey + (yOffset || 0) + eWhiteR * 0.05;
+        const py = ey + (yOffset || 0) + eWhiteR * 0.02;
+        const irisR = eWhiteR * 0.75;
+
+        const iris = g.createRadialGradient(px, py, irisR * 0.1, px, py, irisR);
+        iris.addColorStop(0, irisPalette.inner);
+        iris.addColorStop(0.6, irisPalette.mid);
+        iris.addColorStop(1, irisPalette.rim);
+        g.beginPath();
+        g.arc(px, py, irisR, 0, Math.PI * 2);
+        g.closePath();
+        g.fillStyle = iris;
+        g.fill();
+
+        // Iris rim
+        g.lineWidth = Math.max(1, size * 0.02);
+        g.strokeStyle = 'rgba(13,18,36,0.6)';
+        g.stroke();
+
+        // Pupil
         g.beginPath();
         g.arc(px, py, pupilR, 0, Math.PI * 2);
         g.closePath();
-        g.fillStyle = '#0d1224';
+        g.fillStyle = '#060a12';
         g.fill();
 
-        // Pupil highlight
+        // Eye shine
         g.beginPath();
-        g.arc(px - pupilR * 0.35, py - pupilR * 0.35, pupilR * 0.18, 0, Math.PI * 2);
-        g.closePath();
+        g.ellipse(px - irisR * 0.28, py - irisR * 0.32, irisR * 0.20, irisR * 0.11, -0.35, 0, Math.PI * 2);
+        g.fillStyle = 'rgba(255,255,255,0.85)';
+        g.fill();
+
+        g.beginPath();
+        g.arc(px + irisR * 0.22, py - irisR * 0.18, irisR * 0.08, 0, Math.PI * 2);
         g.fillStyle = 'rgba(255,255,255,0.7)';
         g.fill();
+
+        if (style === 'bigCute') {
+          drawSparkle(px - irisR * 0.10, py - irisR * 0.05, irisR * 0.12);
+        }
       }
 
-      // Eyelid line
-      g.lineWidth = Math.max(1, size * 0.03);
-      g.strokeStyle = 'rgba(13,18,36,0.45)';
+      // Lashes
+      g.lineWidth = topLash;
+      g.strokeStyle = 'rgba(13,18,36,0.85)';
       g.beginPath();
-      g.arc(ex, ey, eWhiteR, Math.PI, 0, true);
+      g.arc(ex, ey, eWhiteR, Math.PI * 0.92, Math.PI * 0.08, true);
+      g.stroke();
+
+      g.lineWidth = bottomLash;
+      g.strokeStyle = 'rgba(13,18,36,0.18)';
+      g.beginPath();
+      g.arc(ex, ey, eWhiteR, Math.PI * 0.08, Math.PI * 0.92, false);
       g.stroke();
 
       g.restore();
