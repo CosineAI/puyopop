@@ -181,6 +181,25 @@ export class Renderer {
         }
       }
     }
+
+    // Draw active piece on top using the same pipeline for maximum compatibility
+    if (p.active) {
+      const { x, y, ori, a, b } = p.active;
+      const off = (function(o){switch(o&3){case 0:return{ox:0,oy:-1};case 1:return{ox:1,oy:0};case 2:return{ox:0,oy:1};case 3:return{ox:-1,oy:0};}})(ori);
+      const cells = [
+        { x, y, color: a },
+        { x: x + off.ox, y: y + off.oy, color: b }
+      ];
+      p.ctx.save();
+      p.ctx.globalAlpha = 1;
+      p.ctx.globalCompositeOperation = 'source-over';
+      for (const c of cells) {
+        if (c.y >= 0) {
+          Renderer.drawCell(p.ctx, c.x * p.CELL + 2, c.y * p.CELL + 2, c.color, p.CELL - 3, p.manager.animTimeMs);
+        }
+      }
+      p.ctx.restore();
+    }
   }
 
   static drawActive(p) {
