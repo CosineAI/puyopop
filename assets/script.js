@@ -10,7 +10,7 @@
   const GARBAGE_COLOR = '#69707b';
 
   // Timing
-  const BASE_DROP_MS = 800;
+  const BASE_DROP_MS = 1600; // Start at half the speed (slower fall)
   const SPEED_UP_EVERY = 10;
   const SPEED_FACTOR = 0.85;
 
