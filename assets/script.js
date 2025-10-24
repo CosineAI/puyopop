@@ -81,8 +81,10 @@
     g.lineWidth = Math.max(1, size * 0.03);
     g.strokeStyle = 'rgba(255,255,255,0.10)';
     g.stroke();
+    g.restore();
 
-    // Cheek blush
+    // Cheek blush (kept subtle)
+    g.save();
     g.globalAlpha = 0.18;
     g.beginPath();
     g.ellipse(cx - r * 0.28, cy + r * 0.14, r * 0.30, r * 0.14, -0.1, 0, Math.PI * 2);
@@ -91,14 +93,12 @@
     g.beginPath();
     g.ellipse(cx + r * 0.28, cy + r * 0.14, r * 0.30, r * 0.14, 0.1, 0, Math.PI * 2);
     g.fill();
-    g.globalAlpha = 1;
     g.restore();
 
-    // Eyes
+    // Eyes: pupils only (no sclera/iris/lashes)
     const style = EYE_STYLE_BY_COLOR[color];
     if (!style) return;
 
-    const irisPalette = EYE_IRIS_COLORS[color] || { inner: '#ffffff', mid: '#cfcfcf', rim: '#7f7f7f' };
     const t = animTimeMs || 0;
     const seed = ((x * 97) ^ (y * 131)) % 1000;
 
@@ -112,7 +112,6 @@
     let leftOffset = { dx: 0, dy: 0 };
     let rightOffset = { dx: 0, dy: 0 };
 
-    // Blink helper
     function blinkOpen(time, s, period, closeDur, halfDur, base = 1, min = 0) {
       const ph = ((time + s) % period) / period;
       if (ph < closeDur / period) return min;
@@ -135,7 +134,6 @@
     } else if (style === 'bigCute') {
       eyeR = baseEyeR * 1.22;
       pupilR = eyeR * 0.52;
-      // gentle wandering
       const ang = ((t + seed * 4) / 1400) * Math.PI * 2;
       const roam = eyeR * 0.12;
       leftOffset.dx = Math.cos(ang) * roam;
@@ -145,7 +143,6 @@
     } else if (style === 'smallFocused') {
       eyeR = baseEyeR * 0.80;
       pupilR = eyeR * 0.36;
-      // micro-saccades
       const snap = Math.floor(((t + seed * 7) / 700) % 4);
       const offset = eyeR * 0.12;
       const table = [
@@ -168,113 +165,32 @@
       rightOffset.dy = Math.sin(ang + 0.6) * roam * 0.6;
     }
 
-    function drawSparkle(sx, sy, rr, alpha, rot) {
-      g.save();
-      g.translate(sx, sy);
-      g.rotate(rot || -0.4);
+    function drawPupil(px, py, open) {
+      if (open <= 0.06) return;
+      const pr = pupilR * (0.85 + 0.15 * Math.max(0, Math.min(open, 1)));
+      // Pupil
       g.beginPath();
-      g.moveTo(0, -rr);
-      g.lineTo(rr * 0.38, -rr * 0.38);
-      g.lineTo(rr, 0);
-      g.lineTo(rr * 0.38, rr * 0.38);
-      g.lineTo(0, rr);
-      g.lineTo(-rr * 0.38, rr * 0.38);
-      g.lineTo(-rr, 0);
-      g.lineTo(-rr * 0.38, -rr * 0.38);
+      g.arc(px, py, pr, 0, Math.PI * 2);
       g.closePath();
-      g.fillStyle = `rgba(255,255,255,${alpha})`;
+      g.fillStyle = '#0d1224';
       g.fill();
-      g.restore();
-    }
-
-    function drawEye(ex, ey, open, xOffset, yOffset) {
-      const eWhiteR = eyeR;
-      const topLash = Math.max(1, size * (style === 'sleepy' ? 0.085 : 0.068));
-      const bottomLash = Math.max(1, size * 0.022);
-
-      // Eye white (ellipse scaled by open)
-      g.save();
+      // Shine
       g.beginPath();
-      g.arc(ex, ey, eWhiteR, 0, Math.PI * 2);
-      g.clip();
-
-      g.save();
-      const vScale = 0.64 + 0.36 * Math.max(0, Math.min(open, 1));
-      g.translate(ex, ey);
-      g.scale(1, vScale);
-      g.beginPath();
-      g.arc(0, 0, eWhiteR, 0, Math.PI * 2);
-      g.closePath();
-      g.fillStyle = 'white';
+      g.ellipse(px - pr * 0.35, py - pr * 0.35, pr * 0.20, pr * 0.12, -0.35, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(255,255,255,0.85)';
       g.fill();
-      g.restore();
-
-      // Iris
-      if (open > 0.08) {
-        const px = ex + (xOffset || 0);
-        const py = ey + (yOffset || 0) + eWhiteR * 0.02;
-        const irisR = eWhiteR * 0.76;
-
-        const iris = g.createRadialGradient(px, py, irisR * 0.1, px, py, irisR);
-        iris.addColorStop(0, irisPalette.inner);
-        iris.addColorStop(0.65, irisPalette.mid);
-        iris.addColorStop(1, irisPalette.rim);
-        g.beginPath();
-        g.arc(px, py, irisR, 0, Math.PI * 2);
-        g.closePath();
-        g.fillStyle = iris;
-        g.fill();
-
-        // Iris rim
-        g.lineWidth = Math.max(1, size * 0.022);
-        g.strokeStyle = 'rgba(13,18,36,0.65)';
-        g.stroke();
-
-        // Pupil
-        g.beginPath();
-        g.arc(px, py, pupilR, 0, Math.PI * 2);
-        g.closePath();
-        g.fillStyle = '#060a12';
-        g.fill();
-
-        // Eye shines
-        g.beginPath();
-        g.ellipse(px - irisR * 0.28, py - irisR * 0.32, irisR * 0.20, irisR * 0.11, -0.35, 0, Math.PI * 2);
-        g.fillStyle = 'rgba(255,255,255,0.9)';
-        g.fill();
-        g.beginPath();
-        g.arc(px + irisR * 0.22, py - irisR * 0.18, irisR * 0.08, 0, Math.PI * 2);
-        g.fillStyle = 'rgba(255,255,255,0.78)';
-        g.fill();
-
-        if (style === 'bigCute') {
-          const tw = 0.45 + 0.45 * (0.5 + 0.5 * Math.sin((t + seed * 11) / 300));
-          drawSparkle(px - irisR * 0.10, py - irisR * 0.05, irisR * 0.12, tw, -0.4 + Math.sin((t + seed) / 800) * 0.2);
-        }
-      }
-
-      // Lashes
-      g.lineWidth = topLash;
-      g.strokeStyle = 'rgba(13,18,36,0.9)';
       g.beginPath();
-      g.arc(ex, ey, eWhiteR, Math.PI * 0.92, Math.PI * 0.08, true);
-      g.stroke();
-
-      g.lineWidth = bottomLash;
-      g.strokeStyle = 'rgba(13,18,36,0.22)';
-      g.beginPath();
-      g.arc(ex, ey, eWhiteR, Math.PI * 0.08, Math.PI * 0.92, false);
-      g.stroke();
-
-      g.restore();
+      g.arc(px + pr * 0.22, py - pr * 0.18, pr * 0.09, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(255,255,255,0.7)';
+      g.fill();
     }
 
     const leftX = cx - eyeDX;
     const rightX = cx + eyeDX;
     const eyeY = cy + eyeDY;
 
-    drawEye(leftX, eyeY, leftOpen, leftOffset.dx, leftOffset.dy);
-    drawEye(rightX, eyeY, rightOpen, rightOffset.dx, rightOffset.dy);
+    drawPupil(leftX + (leftOffset.dx || 0), eyeY + (leftOffset.dy || 0), leftOpen);
+    drawPupil(rightX + (rightOffset.dx || 0), eyeY + (rightOffset.dy || 0), rightOpen);
   }
 
   function makePlayer(id) {
