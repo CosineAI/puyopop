@@ -449,8 +449,8 @@
   const keys = new Set();
   window.addEventListener('keydown', e => {
     const gameplayCodes = new Set([
-      'KeyA','KeyD','KeyS','KeyF','KeyG','Space',
-      'ArrowLeft','ArrowRight','ArrowDown','Comma','Period',
+      'KeyA','KeyD','KeyS','KeyF','KeyG','KeyW','Space',
+      'ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Comma','Period',
       'KeyR'
     ]);
     if (gameplayCodes.has(e.code)) e.preventDefault();
@@ -465,7 +465,7 @@
       case 'KeyS': softDrop(p1); break;
       case 'KeyF': rotate(p1, -1); break;
       case 'KeyG': rotate(p1, 1); break;
-      case 'Space': hardDrop(p1); break;
+      case 'KeyW': hardDrop(p1); break;
     }
 
     // Player 2
@@ -473,6 +473,7 @@
       case 'ArrowLeft': move(p2, -1); break;
       case 'ArrowRight': move(p2, 1); break;
       case 'ArrowDown': softDrop(p2); break;
+      case 'ArrowUp': hardDrop(p2); break;
       case 'Comma': rotate(p2, -1); break;
       case 'Period': rotate(p2, 1); break;
     }
