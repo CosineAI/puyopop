@@ -8,6 +8,14 @@
   const EMPTY = 0;
   const GARBAGE = -1;
   const GARBAGE_COLOR = '#69707b';
+  const EYE_STYLE_BY_COLOR = {
+    '#ff4757': 'bigCute',       // red
+    '#2ed573': 'sleepy',        // green
+    '#1e90ff': 'wandering',     // blue
+    '#ffa502': 'blinking',      // yellow
+    '#a55eea': 'smallFocused'   // purple
+  };
+  let animTimeMs = 0;
 
   // Timing
   const BASE_DROP_MS = 1600; // Start at half the speed (slower fall)
@@ -30,19 +38,144 @@
   }
 
   function drawCell(g, x, y, color, size) {
-    const r = Math.floor(size * 0.2);
-    g.fillStyle = color;
+    const cx = x + size / 2;
+    const cy = y + size / 2;
+    const r = (size * 0.45);
+
+    // Blob base: round and shiny
+    g.save();
     g.beginPath();
-    g.roundRect(x, y, size - 1, size - 1, r);
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.closePath();
+    g.fillStyle = color;
     g.fill();
 
-    const grd = g.createLinearGradient(x, y, x + size, y + size);
-    grd.addColorStop(0, 'rgba(255,255,255,0.35)');
-    grd.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = grd;
-    g.beginPath();
-    g.roundRect(x + 3, y + 3, size - 7, size - 7, r - 2);
+    // Soft inner shading
+    const inner = g.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
+    inner.addColorStop(0, 'rgba(0,0,0,0.04)');
+    inner.addColorStop(1, 'rgba(0,0,0,0.16)');
+    g.fillStyle = inner;
     g.fill();
+
+    // Glossy highlight toward top-left
+    const hx = cx - r * 0.35;
+    const hy = cy - r * 0.35;
+    const highlight = g.createRadialGradient(hx, hy, r * 0.05, hx, hy, r * 0.7);
+    highlight.addColorStop(0, 'rgba(255,255,255,0.55)');
+    highlight.addColorStop(0.4, 'rgba(255,255,255,0.25)');
+    highlight.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = highlight;
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.closePath();
+    g.fill();
+
+    // Subtle rim light
+    g.lineWidth = Math.max(1, size * 0.03);
+    g.strokeStyle = 'rgba(255,255,255,0.10)';
+    g.stroke();
+
+    g.restore();
+
+    // Eyes (skip if style not defined, e.g., garbage)
+    const style = EYE_STYLE_BY_COLOR[color];
+    if (!style) return;
+
+    const t = animTimeMs || 0;
+    const seed = ((x * 97) ^ (y * 131)) % 1000; // deterministic per position
+
+    // Eye positions
+    const eyeDY = r * 0.05;
+    const eyeDX = r * 0.45;
+    const baseEyeR = r * 0.22;
+
+    // Derive params by style
+    let leftOpen = 1, rightOpen = 1;
+    let eyeR = baseEyeR;
+    let pupilR = eyeR * 0.45;
+    let leftOffset = { dx: 0, dy: 0 };
+    let rightOffset = { dx: 0, dy: 0 };
+
+    if (style === 'sleepy') {
+      leftOpen = rightOpen = 0.55;
+      pupilR = eyeR * 0.35;
+    } else if (style === 'blinking') {
+      // periodic blink with slight desync
+      const phaseL = ((t + seed * 3) / 1000) % 4;
+      const phaseR = ((t + seed * 5) / 1000) % 4;
+      const blinkFn = (ph) => (ph < 0.08 ? 0 : ph < 0.16 ? 0.2 : 1);
+      leftOpen = blinkFn(phaseL);
+      rightOpen = blinkFn(phaseR);
+    } else if (style === 'bigCute') {
+      eyeR = baseEyeR * 1.15;
+      pupilR = eyeR * 0.5;
+      leftOffset.dy = -eyeR * 0.1;
+      rightOffset.dy = -eyeR * 0.1;
+    } else if (style === 'smallFocused') {
+      eyeR = baseEyeR * 0.75;
+      pupilR = eyeR * 0.35;
+      leftOffset.dx = eyeR * 0.10;
+      rightOffset.dx = -eyeR * 0.10;
+    } else if (style === 'wandering') {
+      const ang = ((t + seed * 7) / 1000) * Math.PI * 2;
+      const roam = eyeR * 0.18;
+      leftOffset.dx = Math.cos(ang) * roam;
+      leftOffset.dy = Math.sin(ang) * roam * 0.6;
+      rightOffset.dx = Math.cos(ang + 0.6) * roam;
+      rightOffset.dy = Math.sin(ang + 0.6) * roam * 0.6;
+    }
+
+    // Draw single eye helper with opening fraction
+    function drawEye(ex, ey, open, xOffset, yOffset) {
+      const eWhiteR = eyeR;
+      // Eye white with clip to simulate eyelid opening
+      g.save();
+      g.beginPath();
+      g.arc(ex, ey, eWhiteR, 0, Math.PI * 2);
+      g.closePath();
+      g.clip();
+      // Clip rect from center downward based on open fraction
+      const h = Math.max(0, eWhiteR * 2 * open);
+      g.beginPath();
+      g.rect(ex - eWhiteR, ey - eWhiteR, eWhiteR * 2, h);
+      g.closePath();
+      g.fillStyle = 'white';
+      g.fill();
+
+      // Pupil
+      if (open > 0.08) {
+        const px = ex + (xOffset || 0);
+        const py = ey + (yOffset || 0) + eWhiteR * 0.05;
+        g.beginPath();
+        g.arc(px, py, pupilR, 0, Math.PI * 2);
+        g.closePath();
+        g.fillStyle = '#0d1224';
+        g.fill();
+
+        // Pupil highlight
+        g.beginPath();
+        g.arc(px - pupilR * 0.35, py - pupilR * 0.35, pupilR * 0.18, 0, Math.PI * 2);
+        g.closePath();
+        g.fillStyle = 'rgba(255,255,255,0.7)';
+        g.fill();
+      }
+
+      // Eyelid line
+      g.lineWidth = Math.max(1, size * 0.03);
+      g.strokeStyle = 'rgba(13,18,36,0.45)';
+      g.beginPath();
+      g.arc(ex, ey, eWhiteR, Math.PI, 0, true);
+      g.stroke();
+
+      g.restore();
+    }
+
+    const leftX = cx - eyeDX;
+    const rightX = cx + eyeDX;
+    const eyeY = cy + eyeDY;
+
+    drawEye(leftX, eyeY, leftOpen, leftOffset.dx, leftOffset.dy);
+    drawEye(rightX, eyeY, rightOpen, rightOffset.dx, rightOffset.dy);
   }
 
   function makePlayer(id) {
@@ -424,6 +557,7 @@
 
   let last = 0;
   function tick(ts) {
+    animTimeMs = ts;
     if (!last) last = ts;
     const dt = ts - last;
     last = ts;
