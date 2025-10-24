@@ -397,6 +397,10 @@
   // Input
   const keys = new Set();
   window.addEventListener('keydown', e => {
+    // Prevent default browser actions (scroll, button activation) for gameplay keys
+    const gameplayCodes = new Set(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space','KeyZ','KeyX','KeyR']);
+    if (gameplayCodes.has(e.code)) e.preventDefault();
+
     if (gameOver && (e.key === 'r' || e.key === 'R' || e.code === 'Space')) {
       reset();
       return;
@@ -416,8 +420,15 @@
       case 'KeyR': reset(); break;
     }
   });
-  window.addEventListener('keyup', e => keys.delete(e.code));
-  startBtn?.addEventListener('click', reset);
+  window.addEventListener('keyup', e => {
+    if (e.code === 'Space') e.preventDefault();
+    keys.delete(e.code);
+  });
+  startBtn?.addEventListener('click', () => {
+    // Ensure space bar doesn't activate the button after starting
+    startBtn.blur();
+    reset();
+  });
 
   // Polyfill for roundRect when unavailable
   if (!CanvasRenderingContext2D.prototype.roundRect) {
