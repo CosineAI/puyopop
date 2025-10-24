@@ -3,56 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puyo Pop Clone</title>
+  <title>Puyo Pop Clone - Two Player</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <main>
-    <h1 style="text-align:center;margin-top:0;">Puyo Pop Clone</h1>
-    <section class="game-wrap">
-      <canvas id="game" width="288" height="576" aria-label="Puyo game board"></canvas>
-      <aside class="sidebar">
+    <h1 style="text-align:center;margin-top:0;">Puyo Pop Clone — Two Player</h1>
+    <section class="game-wrap two">
+      <div class="player" id="player1">
+        <canvas id="game1" width="288" height="576" aria-label="Player 1 board"></canvas>
         <div class="panel">
           <div class="row">
             <div>
-              <div class="label">Score</div>
-              <div id="score" class="value">0</div>
+              <div class="label">Score (P1)</div>
+              <div id="score1" class="value">0</div>
             </div>
             <div>
               <div class="label">Chains</div>
-              <div id="chains" class="value">0</div>
+              <div id="chains1" class="value">0</div>
             </div>
           </div>
           <div class="row">
             <div>
               <div class="label">Speed</div>
-              <div id="speed" class="value">1x</div>
+              <div id="speed1" class="value">1x</div>
             </div>
             <div>
               <div class="label">Lines</div>
-              <div id="lines" class="value">0</div>
+              <div id="lines1" class="value">0</div>
             </div>
           </div>
         </div>
-
         <div class="panel">
-          <div class="label">Next</div>
-          <canvas id="next" width="96" height="96" aria-label="Next pair preview"></canvas>
+          <div class="label">Next (P1)</div>
+          <canvas id="next1" width="96" height="96" aria-label="Next pair preview P1"></canvas>
         </div>
+      </div>
 
-        <div class="panel controls">
-          <div class="label">Controls</div>
+      <div class="player" id="player2">
+        <canvas id="game2" width="288" height="576" aria-label="Player 2 board"></canvas>
+        <div class="panel">
+          <div class="row">
+            <div>
+              <div class="label">Score (P2)</div>
+              <div id="score2" class="value">0</div>
+            </div>
+            <div>
+              <div class="label">Chains</div>
+              <div id="chains2" class="value">0</div>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Speed</div>
+              <div id="speed2" class="value">1x</div>
+            </div>
+            <div>
+              <div class="label">Lines</div>
+              <div id="lines2" class="value">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="label">Next (P2)</div>
+          <canvas id="next2" width="96" height="96" aria-label="Next pair preview P2"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <div class="panel controls">
+      <div class="label">Controls</div>
+      <div class="controls-grid">
+        <div>
+          <strong>Player 1</strong>
+          <ul>
+            <li>A/D: Move</li>
+            <li>S: Soft drop</li>
+            <li>F/G: Rotate</li>
+            <li>Space: Hard drop</li>
+          </ul>
+        </div>
+        <div>
+          <strong>Player 2</strong>
           <ul>
             <li>Left/Right: Move</li>
             <li>Down: Soft drop</li>
-            <li>Z/X or Up: Rotate</li>
-            <li>Space: Hard drop</li>
-            <li>R: Restart</li>
+            <li>, / .: Rotate</li>
           </ul>
-          <button id="startBtn">Start / Restart</button>
         </div>
-      </aside>
-    </section>
+      </div>
+      <button id="startBtn">Start / Restart</button>
+    </div>
   </main>
   <footer>
     <p>&copy; 2025 Puyo Pop Clone</p>
