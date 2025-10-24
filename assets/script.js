@@ -108,7 +108,7 @@
 
     let leftOpen = 1, rightOpen = 1;
     let eyeR = baseEyeR;
-    let pupilR = eyeR * 0.46;
+    let pupilR = eyeR * 0.52;
     let leftOffset = { dx: 0, dy: 0 };
     let rightOffset = { dx: 0, dy: 0 };
 
@@ -124,7 +124,7 @@
       const p = 5400, close = 140, half = 220;
       leftOpen = blinkOpen(t, seed * 2, p, close, half, base, 0);
       rightOpen = blinkOpen(t, seed * 3, p, close, half, base, 0);
-      pupilR = eyeR * 0.34;
+      pupilR = eyeR * 0.38;
       leftOffset.dy = eyeR * 0.06;
       rightOffset.dy = eyeR * 0.06;
     } else if (style === 'blinking') {
@@ -133,7 +133,7 @@
       rightOpen = blinkOpen(t, seed * 5, p, close, half, 1, 0);
     } else if (style === 'bigCute') {
       eyeR = baseEyeR * 1.22;
-      pupilR = eyeR * 0.52;
+      pupilR = eyeR * 0.58;
       const ang = ((t + seed * 4) / 1400) * Math.PI * 2;
       const roam = eyeR * 0.12;
       leftOffset.dx = Math.cos(ang) * roam;
