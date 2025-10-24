@@ -501,10 +501,13 @@
     const main = document.querySelector('main');
     const controls = document.querySelector('.controls');
     const footer = document.querySelector('footer');
-    const gap = 24;
+    const wrap = document.querySelector('.game-wrap.two') || document.querySelector('.game-wrap');
+
+    const wrapStyles = wrap ? getComputedStyle(wrap) : null;
+    const colGap = wrapStyles ? parseFloat(wrapStyles.columnGap || wrapStyles.gap || '0') || 0 : 0;
 
     const availW = main.clientWidth;
-    const perHalfW = Math.floor((availW - gap) / 2);
+    const perHalfW = Math.floor((availW - colGap) / 2);
 
     const styles = getComputedStyle(main);
     const padV = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);

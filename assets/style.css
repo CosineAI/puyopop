@@ -1,3 +1,5 @@
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
   height: 100%;
   margin: 0;
@@ -92,10 +94,11 @@ footer {
 }
 
 .hud-side {
-  width: 180px;
-  min-width: 160px;
+  width: clamp(140px, 18vw, 180px);
+  min-width: 140px;
   display: flex;
   position: relative;
+  overflow: hidden;
 }
 
 .hud-stack {
