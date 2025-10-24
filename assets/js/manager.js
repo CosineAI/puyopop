@@ -40,9 +40,8 @@ export class GameManager {
     Renderer.drawPreview(this.p1); Renderer.drawPreview(this.p2);
     Renderer.draw(this.p1); Renderer.draw(this.p2);
 
-    // Hint overlay so boards don't look blank before starting
-    this.showGameOverlay(1, 'Press Start');
-    if (this.playersMode === 2) this.showGameOverlay(2, 'Press Start');
+    // Auto-start so the game begins immediately
+    this.resetByMode();
 
     window.addEventListener('resize', () => {
       this.resize();

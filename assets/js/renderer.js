@@ -3,10 +3,23 @@
 import { EMPTY, GARBAGE_COLOR, EYE_STYLE_BY_COLOR, COLS, ROWS } from './constants.js';
 
 export class Renderer {
-  static drawCell(g, x, y, color, size, animTimeMs) {
+  static drawCell(g, x, y, color, size, animTimeMs, opts = {}) {
     const cx = x + size / 2;
     const cy = y + size / 2;
     const r = size * 0.45;
+
+    // Optional visibility outline/halo (useful for active/falling pieces)
+    if (opts.outline) {
+      g.save();
+      g.beginPath();
+      g.arc(cx, cy, r + Math.max(2, size * 0.10), 0, Math.PI * 2);
+      g.fillStyle = 'rgba(255,255,255,0.96)';
+      g.fill();
+      g.lineWidth = Math.max(2, size * 0.08);
+      g.strokeStyle = 'rgba(0,0,0,0.45)';
+      g.stroke();
+      g.restore();
+    }
 
     // Blob base
     g.save();
@@ -152,6 +165,10 @@ export class Renderer {
   static drawGrid(p) {
     p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
 
+    // Ensure default compositing on every frame
+    p.ctx.globalCompositeOperation = 'source-over';
+    p.ctx.globalAlpha = 1;
+
     // Light base fill so falling pieces have consistent contrast
     p.ctx.save();
     p.ctx.fillStyle = 'rgba(255,255,255,0.55)';
@@ -181,33 +198,7 @@ export class Renderer {
         }
       }
     }
-
-    // Draw active piece on top using the same pipeline for maximum compatibility
-    if (p.active) {
-      const { x, y, ori, a, b } = p.active;
-      const off = (function(o){switch(o&3){case 0:return{ox:0,oy:-1};case 1:return{ox:1,oy:0};case 2:return{ox:0,oy:1};case 3:return{ox:-1,oy:0};}})(ori);
-      const cells = [
-        { x, y, color: a },
-        { x: x + off.ox, y: y + off.oy, color: b }
-      ];
-      p.ctx.save();
-      p.ctx.globalAlpha = 1;
-      p.ctx.globalCompositeOperation = 'source-over';
-      for (const c of cells) {
-        if (c.y >= 0) {
-          Renderer.drawCell(p.ctx, c.x * p.CELL + 2, c.y * p.CELL + 2, c.color, p.CELL - 3, p.manager.animTimeMs);
-        }
-      }
-      p.ctx.restore();
-    }
-  }
-
-  static drawActive(p) {
-    if (!p.active) return;
-    const { x, y, ori, a, b } = p.active;
-    const cells = [{ x, y, color: a }];
-    const { ox, oy } = (function(o){switch(o&3){case 0:return{ox:0,oy:-1};case 1:return{ox:1,oy:0};case 2:return{ox:0,oy:1};case 3:return{ox:-1,oy:0};}})(ori);
-    cells.push({ x: x + ox, y: y + oy, color: b });
+  });
 
     // Ensure we draw over everything with full opacity
     p.ctx.save();
@@ -215,10 +206,39 @@ export class Renderer {
     p.ctx.globalCompositeOperation = 'source-over';
 
     for (const c of cells) {
-      if (c.y >= 0) {
-        Renderer.drawCell(p.ctx, c.x * p.CELL + 2, c.y * p.CELL + 2, c.color, p.CELL - 3, p.manager.animTimeMs);
-      }
+      const sx = c.x * p.CELL + 2;
+      const sy = c.y * p.CELL + 2;
+      // Fallback block fill to guarantee visibility even if gradients/paths fail
+      p.ctx.fillStyle = c.color;
+      p.ctx.fillRect(sx, sy, p.CELL - 3, p.CELL - 3);
+      Renderer.drawCell(p.ctx, sx, sy, c.color, p.CELL - 3, p.manager.animTimeMs);
     }
+    p.ctx.restore();
+  }
+    p.ctx.restore();
+  }
+
+  static drawPreview(p) {
+    p.pctx.clearRect(0, 0, p.preview.width, p.preview.height);
+    const size = Math.floor(p.preview.width / 3);
+    const startX = size;
+    const startY = size / 2;
+    Renderer.drawCell(p.pctx, startX, startY, p.nextPair.a, size, p.manager.animTimeMs);
+    Renderer.drawCell(p.pctx, startX, startY + size + 4, p.nextPair.b, size, p.manager.animTimeMs);
+  }
+
+  static updateHud(p) {
+    p.hud.score.textContent = String(p.score);
+    p.hud.chains.textContent = String(p.chainShown);
+    p.hud.speed.textContent = `${(1600 / p.dropMs).toFixed(1)}x`;
+    p.hud.lines.textContent = String(p.totalCleared);
+  }
+
+  static draw(p) {
+    Renderer.drawGrid(p);
+    Renderer.drawActive(p);
+  }
+}
     p.ctx.restore();
   }
 
