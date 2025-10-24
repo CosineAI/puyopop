@@ -504,32 +504,28 @@
     const gap = 24;
 
     const availW = main.clientWidth;
-    const perBoardMaxW = Math.floor((availW - gap) / 2);
+    const perHalfW = Math.floor((availW - gap) / 2);
 
     const styles = getComputedStyle(main);
     const padV = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
     const availH = window.innerHeight - (footer ? footer.offsetHeight : 0) - (controls ? controls.offsetHeight : 0) - padV - 20;
 
-    function overheadFor(id) {
-      const playerEl = document.getElementById(`player${id}`);
-      let overhead = 0;
-      playerEl.querySelectorAll('.panel').forEach(panel => {
-        overhead += panel.offsetHeight + 12;
-      });
-      return overhead;
+    function sideWidthFor(id) {
+      const el = document.querySelector(`#player${id} .hud-side`);
+      return el ? el.offsetWidth : 160;
     }
-    const oh = Math.max(overheadFor(1), overheadFor(2));
 
-    let boardHByW = perBoardMaxW * 2;
-    let boardHByH = Math.floor(availH - oh);
-    let boardH = Math.max(140, Math.min(boardHByW, boardHByH));
+    function applySizeFor(p, id) {
+      const sideW = sideWidthFor(id);
+      const canvasMaxW = Math.max(120, perHalfW - sideW - 12);
+      const widthByHeight = Math.max(120, Math.floor(availH / 2));
+      const targetW = Math.min(canvasMaxW, widthByHeight);
 
-    const cellPix = Math.max(12, Math.floor((boardH / 2) / COLS));
-    const internalW = cellPix * COLS;
-    const internalH = internalW * 2;
-    const previewSize = Math.max(64, Math.floor(internalW / 3));
+      const cellPix = Math.max(12, Math.floor(targetW / COLS));
+      const internalW = cellPix * COLS;
+      const internalH = internalW * 2;
+      const previewSize = Math.max(64, Math.floor(internalW / 3));
 
-    function applySize(p) {
       p.canvas.width = internalW;
       p.canvas.height = internalH;
       p.canvas.style.width = internalW + 'px';
@@ -538,8 +534,9 @@
       p.preview.height = previewSize;
       p.CELL = Math.floor(p.canvas.width / COLS);
     }
-    applySize(p1);
-    applySize(p2);
+
+    applySizeFor(p1, 1);
+    applySizeFor(p2, 2);
   }
 
   // Polyfill

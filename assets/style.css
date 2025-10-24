@@ -64,6 +64,7 @@ footer {
 
 .game-wrap.two {
   grid-template-columns: 1fr 1fr;
+  height: 100%;
 }
 
 .player {
@@ -71,7 +72,59 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  height: 100%;
 }
+
+.player-inner {
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.player.left .player-inner {
+  flex-direction: row;
+}
+
+.player.right .player-inner {
+  flex-direction: row-reverse;
+}
+
+.hud-side {
+  width: 180px;
+  min-width: 160px;
+  display: flex;
+  position: relative;
+}
+
+.hud-stack {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  display: grid;
+  grid-auto-rows: min-content;
+  gap: 10px;
+  align-items: center;
+}
+
+.hud-block .label {
+  color: #aab4ff;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.hud-block .value {
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.hud-hidden { display: none; }
 
 #game1, #game2 {
   background: #0c1324;
