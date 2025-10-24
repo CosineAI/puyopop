@@ -16,24 +16,11 @@ body {
   overflow: hidden;
   position: relative;
 
-  /* Highly pixelated rainbow mosaic with stronger saturated colors */
-  background:
-    repeating-linear-gradient(90deg,
-      #ff3b6b 0 32px,
-      #ffd400 32px 64px,
-      #2bd578 64px 96px,
-      #00a9ff 96px 128px,
-      #8a2be2 128px 160px
-    ),
-    repeating-linear-gradient(0deg,
-      rgba(255,59,107,0.35) 0 32px,
-      rgba(255,212,0,0.35) 32px 64px,
-      rgba(43,213,120,0.35) 64px 96px,
-      rgba(0,169,255,0.35) 96px 128px,
-      rgba(138,43,226,0.35) 128px 160px
-    ),
-    radial-gradient(1200px 800px at 20% 0%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.06) 45%, rgba(255,255,255,0.03) 100%);
-  background-blend-mode: normal, normal, normal;
+  /* Background image: candy world */
+  background-image: url('./candy_world.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
 }
 
@@ -184,10 +171,12 @@ footer {
 .hud-hidden { display: none; }
 
 #game1, #game2 {
-  background: radial-gradient(120% 120% at 50% 0%, #0e162b 0%, #0b1324 60%, #0a1120 100%);
+  background: rgba(255,255,255,0.55);
   border-radius: 12px;
   box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06), 0 10px 24px rgba(20,22,35,0.25);
   margin-bottom: 12px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* Game over / winner overlay */
