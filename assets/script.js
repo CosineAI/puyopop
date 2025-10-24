@@ -1,15 +1,13 @@
-// Puyo Pop Clone — Two Player
+// Puyo Pop Clone — Two Player with Garbage and Responsive Scaling
 
 (() => {
-  const startBtn = document.getElementById('startBtn');
-
   // Board settings
   const COLS = 6;
   const ROWS = 12;
   const COLORS = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#a55eea'];
   const EMPTY = 0;
   const GARBAGE = -1;
-  const GARBAGE_COLOR = "#69707b";
+  const GARBAGE_COLOR = '#69707b';
 
   // Timing
   const BASE_DROP_MS = 800;
@@ -52,7 +50,6 @@
     const ctx = canvas.getContext('2d');
     const preview = document.getElementById(`next${id}`);
     const pctx = preview.getContext('2d');
-    const CELL = Math.floor(canvas.width / COLS);
     const hud = {
       score: document.getElementById(`score${id}`),
       chains: document.getElementById(`chains${id}`),
@@ -61,7 +58,8 @@
     };
     return {
       id,
-      canvas, ctx, preview, pctx, CELL, hud,
+      canvas, ctx, preview, pctx, hud,
+      CELL: Math.floor(canvas.width / COLS),
       grid: createGrid(COLS, ROWS),
       active: null,
       nextPair: makePair(),
@@ -71,8 +69,9 @@
       gameOver: false,
       score: 0,
       totalCleared: 0,
+      chainShown: 0,
       incomingGarbage: 0,
-      chainShown: 0
+      enemy: null
     };
   }
 
@@ -204,12 +203,10 @@
         }
       }
       if (!placed) {
-        // No room at the top row in any column -> overflow
         endGame(p);
         break;
       }
     }
-    // settle garbage
     let moved;
     do {
       moved = gravity(p);
@@ -221,7 +218,6 @@
     const target = sender.enemy;
     if (!target || target.gameOver) return;
     target.incomingGarbage += amount;
-    // deliver after short delay to simulate travel
     setTimeout(() => {
       applyGarbage(target, target.incomingGarbage);
       target.incomingGarbage = 0;
@@ -271,10 +267,8 @@
 
       for (const g of groups) {
         for (const { x, y } of g) {
-          // clear colored puyo
           p.grid[y][x] = EMPTY;
           cleared++;
-          // mark adjacent garbage to clear
           for (const [dx, dy] of dirs) {
             const nx = x + dx, ny = y + dy;
             if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
@@ -284,7 +278,6 @@
           }
         }
       }
-      // clear adjacent garbage (doesn't count toward 'cleared')
       for (const key of toClearGarbage) {
         const nx = key % COLS;
         const ny = Math.floor(key / COLS);
@@ -320,7 +313,6 @@
         const stages = Math.floor(p.totalCleared / SPEED_UP_EVERY);
         p.dropMs = BASE_DROP_MS * Math.pow(SPEED_FACTOR, stages);
 
-        // send garbage to opponent after chain resolves
         if (garbageToSend > 0) {
           sendGarbage(p, garbageToSend);
         }
@@ -331,92 +323,6 @@
       totalChain++;
       const cleared = clearGroups(groups);
       garbageToSend += Math.max(0, Math.floor(cleared / 4) + (totalChain - 1));
-      totalThisLock += chainScore(totalChain, cleared);
-      speedLines += cleared;
-      draw(p);
-      setTimeout(() => {
-        gravity(p);
-        draw(p);
-        setTimeout(loopChain, 120);
-      }, 160);
-    })();
-  }
-    let totalChain = 0;
-    let totalThisLock = 0;
-    let speedLines = 0;
-
-    function findGroups() {
-      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
-      const groups = [];
-      for (let y = 0; y < ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-          const color = p.grid[y][x];
-          if (color === EMPTY || visited[y][x]) continue;
-          const stack = [{ x, y }];
-          const cells = [];
-          visited[y][x] = true;
-          while (stack.length) {
-            const { x: cx, y: cy } = stack.pop();
-            cells.push({ x: cx, y: cy });
-            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-            for (const [dx, dy] of dirs) {
-              const nx = cx + dx, ny = cy + dy;
-              if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
-              if (visited[ny][nx]) continue;
-              if (p.grid[ny][nx] === color) {
-                visited[ny][nx] = true;
-                stack.push({ x: nx, y: ny });
-              }
-            }
-          }
-          if (cells.length >= 4) groups.push(cells);
-        }
-      }
-      return groups;
-    }
-
-    function clearGroups(groups) {
-      let cleared = 0;
-      for (const g of groups) {
-        for (const { x, y } of g) {
-          p.grid[y][x] = EMPTY;
-          cleared++;
-        }
-      }
-      return cleared;
-    }
-
-    function chainScore(chainIndex, cleared) {
-      const chainBonus = Math.pow(2, Math.max(0, chainIndex - 1));
-      return cleared * 10 * chainBonus;
-    }
-
-    function settleAll() {
-      let moved;
-      do {
-        moved = gravity(p);
-      } while (moved);
-    }
-
-    settleAll();
-    draw(p);
-
-    (function loopChain() {
-      const groups = findGroups();
-      if (groups.length === 0) {
-        p.score += totalThisLock;
-        p.chainShown = totalChain;
-        p.totalCleared += speedLines;
-        updateHud(p);
-
-        const stages = Math.floor(p.totalCleared / SPEED_UP_EVERY);
-        p.dropMs = BASE_DROP_MS * Math.pow(SPEED_FACTOR, stages);
-
-        if (!p.gameOver) spawn(p);
-        return;
-      }
-      totalChain++;
-      const cleared = clearGroups(groups);
       totalThisLock += chainScore(totalChain, cleared);
       speedLines += cleared;
       draw(p);
@@ -444,12 +350,15 @@
       p.ctx.stroke();
     }
 
-    for (let y = 0;  << ROWS; y++) {
-      for (let x = 0;  << COLS; x++) {
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
         const cell = p.grid[y][x];
         if (cell !== EMPTY) {
           const color = cell === GARBAGE ? GARBAGE_COLOR : cell;
-          drawCell(p.ctx }
+          drawCell(p.ctx, x * p.CELL + 2, y * p.CELL + 2, color, p.CELL - 3);
+        }
+      }
+    }
   }
 
   function drawActive(p) {
@@ -487,10 +396,9 @@
 
   const p1 = makePlayer(1);
   const p2 = makePlayer(2);
-  const players = [p1, p2];
-
   p1.enemy = p2;
   p2.enemy = p1;
+  const players = [p1, p2];
 
   function resetPlayer(p) {
     p.grid = createGrid(COLS, ROWS);
@@ -509,6 +417,9 @@
 
   function resetBoth() {
     players.forEach(resetPlayer);
+    resize();
+    drawPreview(p1); drawPreview(p2);
+    draw(p1); draw(p2);
   }
 
   let last = 0;
@@ -518,7 +429,6 @@
     last = ts;
 
     for (const p of players) {
-      draw(p);
       if (!p.running) continue;
       p.acc += dt;
       const stepMs = p.dropMs;
@@ -530,6 +440,7 @@
           }
         }
       }
+      draw(p);
     }
     requestAnimationFrame(tick);
   }
@@ -547,7 +458,7 @@
     if (keys.has(e.code)) return;
     keys.add(e.code);
 
-    // Player 1: WASD + F/G rotate, Space hard drop
+    // Player 1
     switch (e.code) {
       case 'KeyA': move(p1, -1); break;
       case 'KeyD': move(p1, 1); break;
@@ -557,7 +468,7 @@
       case 'Space': hardDrop(p1); break;
     }
 
-    // Player 2: Arrow keys + , .
+    // Player 2
     switch (e.code) {
       case 'ArrowLeft': move(p2, -1); break;
       case 'ArrowRight': move(p2, 1); break;
@@ -567,20 +478,68 @@
     }
 
     if (e.code === 'KeyR') {
+      const btn = document.getElementById('startBtn');
+      if (btn) btn.blur();
       resetBoth();
-      startBtn?.blur();
     }
   });
-
   window.addEventListener('keyup', e => {
     if (e.code === 'Space') e.preventDefault();
     keys.delete(e.code);
   });
 
-  startBtn?.addEventListener('click', () => {
-    startBtn.blur();
-    resetBoth();
-  });
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      startBtn.blur();
+      resetBoth();
+    });
+  }
+
+  function resize() {
+    const main = document.querySelector('main');
+    const controls = document.querySelector('.controls');
+    const footer = document.querySelector('footer');
+    const gap = 24;
+
+    const availW = main.clientWidth;
+    const perBoardMaxW = Math.floor((availW - gap) / 2);
+
+    const styles = getComputedStyle(main);
+    const padV = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const availH = window.innerHeight - (footer ? footer.offsetHeight : 0) - (controls ? controls.offsetHeight : 0) - padV - 20;
+
+    function overheadFor(id) {
+      const playerEl = document.getElementById(`player${id}`);
+      let overhead = 0;
+      playerEl.querySelectorAll('.panel').forEach(panel => {
+        overhead += panel.offsetHeight + 12;
+      });
+      return overhead;
+    }
+    const oh = Math.max(overheadFor(1), overheadFor(2));
+
+    let boardHByW = perBoardMaxW * 2;
+    let boardHByH = Math.floor(availH - oh);
+    let boardH = Math.max(140, Math.min(boardHByW, boardHByH));
+
+    const cellPix = Math.max(12, Math.floor((boardH / 2) / COLS));
+    const internalW = cellPix * COLS;
+    const internalH = internalW * 2;
+    const previewSize = Math.max(64, Math.floor(internalW / 3));
+
+    function applySize(p) {
+      p.canvas.width = internalW;
+      p.canvas.height = internalH;
+      p.canvas.style.width = internalW + 'px';
+      p.canvas.style.height = internalH + 'px';
+      p.preview.width = previewSize;
+      p.preview.height = previewSize;
+      p.CELL = Math.floor(p.canvas.width / COLS);
+    }
+    applySize(p1);
+    applySize(p2);
+  }
 
   // Polyfill
   if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -597,8 +556,14 @@
   }
 
   // Init
+  resize();
   updateHud(p1); updateHud(p2);
   drawPreview(p1); drawPreview(p2);
   draw(p1); draw(p2);
+  window.addEventListener('resize', () => {
+    resize();
+    drawPreview(p1); drawPreview(p2);
+    draw(p1); draw(p2);
+  });
   requestAnimationFrame(tick);
 })();
