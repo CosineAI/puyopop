@@ -151,7 +151,14 @@ export class Renderer {
 
   static drawGrid(p) {
     p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
-    // Darker grid lines so they are visible on light/transparent canvas background
+
+    // Light base fill so falling pieces have consistent contrast
+    p.ctx.save();
+    p.ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    p.ctx.fillRect(0, 0, p.canvas.width, p.canvas.height);
+    p.ctx.restore();
+
+    // Grid lines
     p.ctx.strokeStyle = 'rgba(0,0,0,0.14)';
     for (let x = 0; x <= COLS; x++) {
       p.ctx.beginPath();
@@ -182,11 +189,18 @@ export class Renderer {
     const cells = [{ x, y, color: a }];
     const { ox, oy } = (function(o){switch(o&3){case 0:return{ox:0,oy:-1};case 1:return{ox:1,oy:0};case 2:return{ox:0,oy:1};case 3:return{ox:-1,oy:0};}})(ori);
     cells.push({ x: x + ox, y: y + oy, color: b });
+
+    // Ensure we draw over everything with full opacity
+    p.ctx.save();
+    p.ctx.globalAlpha = 1;
+    p.ctx.globalCompositeOperation = 'source-over';
+
     for (const c of cells) {
       if (c.y >= 0) {
         Renderer.drawCell(p.ctx, c.x * p.CELL + 2, c.y * p.CELL + 2, c.color, p.CELL - 3, p.manager.animTimeMs);
       }
     }
+    p.ctx.restore();
   }
 
   static drawPreview(p) {
