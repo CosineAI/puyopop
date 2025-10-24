@@ -75,7 +75,7 @@ footer {
   flex-direction: column;
   gap: 12px;
   height: 100%;
-  overflow: hidden;
+  overflow: visible; /* allow HUD to fully respond to container */
 }
 
 .player-inner {
@@ -97,16 +97,11 @@ footer {
   width: clamp(140px, 18vw, 180px);
   min-width: 140px;
   display: flex;
-  position: relative;
-  overflow: hidden;
-  padding-bottom: 12px; /* match canvas bottom margin for aligned HUD */
+  flex-direction: column;
+  justify-content: flex-endottom: 12px; /* match canvas bottom margin for aligned HUD */
 }
 
 .hud-stack {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
   display: grid;
   grid-auto-rows: min-content;
