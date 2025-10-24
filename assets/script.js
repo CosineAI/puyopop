@@ -520,14 +520,17 @@
 
     function applySizeFor(p, id) {
       const sideW = sideWidthFor(id);
-      const canvasMaxW = Math.max(120, perHalfW - sideW - 12);
-      const widthByHeight = Math.max(120, Math.floor(availH / 2));
+      const canvasMaxW = Math.max(72, perHalfW - sideW - 12);
+      const widthByHeight = Math.max(96, Math.floor(availH / 2));
       const targetW = Math.min(canvasMaxW, widthByHeight);
 
-      const cellPix = Math.max(12, Math.floor(targetW / COLS));
+      const cellPix = Math.max(10, Math.floor(targetW / COLS));
       const internalW = cellPix * COLS;
       const internalH = internalW * 2;
-      const previewSize = Math.max(64, Math.floor(internalW / 3));
+
+      const previewSizeBase = Math.floor(internalW / 3);
+      const previewMax = Math.max(48, sideW - 24);
+      const previewSize = Math.max(48, Math.min(previewSizeBase, previewMax));
 
       p.canvas.width = internalW;
       p.canvas.height = internalH;

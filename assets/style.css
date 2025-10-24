@@ -75,7 +75,7 @@ footer {
   flex-direction: column;
   gap: 12px;
   height: 100%;
-  overflow: visible; /* allow HUD to fully respond to container */
+  overflow: hidden; /* prevent off-screen overflow within each half */
 }
 
 .player-inner {
@@ -94,20 +94,34 @@ footer {
 }
 
 .hud-side {
-  width: clamp(140px, 18vw, 180px);
-  min-width: 140px;
+  width: clamp(90px, 16vw, 160px);
+  min-width: 90px;
+  max-width: 35vw;
   display: flex;
   flex-direction: column;
-  justify-content: flex-endottom: 12px; /* match canvas bottom margin for aligned HUD */
+  justify-content: flex-end;
+  align-items: stretch;
+  margin-bottom: 12px; /* match canvas bottom margin */
 }
+
+.player.left .hud-side { align-items: flex-start; }
+.player.right .hud-side { align-items: flex-end; }
 
 .hud-stack {
   width: 100%;
   display: grid;
   grid-auto-rows: min-content;
   gap: 10px;
-  align-items: center;
 }
+
+.player.left .hud-stack { align-items: flex-start; }
+.player.right .hud-stack { align-items: flex-end; }
+
+.player.left .hud-block .label,
+.player.left .hud-block .value { text-align: left; }
+
+.player.right .hud-block .label,
+.player.right .hud-block .value { text-align: right; }
 
 .hud-block .label {
   color: #aab4ff;
