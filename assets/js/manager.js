@@ -1,8 +1,19 @@
 // Game Manager
 
-import { BASE_DROP_MS, COLS } from './constants.js';
+import { BASE_DROP_MS, COLS, COLORS } from './constants.js';
 import { Renderer } from './renderer.js';
 import { Player } from './player.js';
+
+// Seeded RNG for shared pair sequence
+function mulberry32(a) {
+  return function() {
+    a |= 0;
+    a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
 
 export class GameManager {
   constructor() {
@@ -14,6 +25,11 @@ export class GameManager {
     this.p1.enemy = this.p2;
     this.p2.enemy = this.p1;
     this.players = [this.p1, this.p2];
+
+    // Shared random sequence for identical piece generation
+    this.rng = mulberry32((Math.random() * 4294967296) >>> 0);
+    this.pairSeq = [];
+    this.initPairSequence(2000);
 
     this.playersMode = 2;
 
@@ -221,6 +237,23 @@ export class GameManager {
     } else {
       this.showGameOverlay(loser.id, 'Game Over');
     }
+  }
+
+  // Shared pair sequence
+  initPairSequence(len = 2000) {
+    this.pairSeq = new Array(len);
+    for (let i = 0; i < len; i++) {
+      const a = COLORS[(this.rng() * COLORS.length) | 0];
+      const b = COLORS[(this.rng() * COLORS.length) | 0];
+      this.pairSeq[i] = { a, b };
+    }
+  }
+
+  getPair(index) {
+    if (index >= this.pairSeq.length) {
+      this.initPairSequence(this.pairSeq.length * 2);
+    }
+    return this.pairSeq[index];
   }
 
   // Layout & sizing

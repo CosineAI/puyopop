@@ -5,7 +5,7 @@ import {
   SPEED_UP_EVERY, SPEED_FACTOR,
   GARBAGE_SEND_DELAY, GARBAGE_STEP_MS
 } from './constants.js';
-import { createGrid, makePair, offsetsForOri } from './utils.js';
+import { createGrid, offsetsForOri } from './utils.js';
 import { Renderer } from './renderer.js';
 
 export class Player {
@@ -31,7 +31,7 @@ export class Player {
     this.CELL = Math.floor(canvas.width / COLS);
     this.grid = createGrid(COLS, ROWS);
     this.active = null;
-    this.nextPair = makePair();
+    this.nextPair = null;
     this.acc = 0;
     this.dropMs = BASE_DROP_MS;
     this.running = false;
@@ -41,6 +41,7 @@ export class Player {
     this.chainShown = 0;
     this.incomingGarbage = 0;
     this.enemy = null;
+    this.spawnCount = 0;
   }
 
   collides(x, y, ori) {
@@ -55,13 +56,14 @@ export class Player {
   }
 
   spawn() {
-    const pair = this.nextPair;
-    this.nextPair = makePair();
+    const pair = this.manager.getPair(this.spawnCount);
     this.active = { x: 2, y: -1, a: pair.a, b: pair.b, ori: 0 };
     if (this.collides(this.active.x, this.active.y, this.active.ori)) {
       this.manager.endGame(this);
       return;
     }
+    this.spawnCount++;
+    this.nextPair = this.manager.getPair(this.spawnCount);
     Renderer.drawPreview(this);
   }
 
@@ -323,7 +325,8 @@ export class Player {
   reset() {
     this.grid = createGrid(COLS, ROWS);
     this.active = null;
-    this.nextPair = makePair();
+    this.spawnCount = 0;
+    this.nextPair = this.manager.getPair(0);
     this.acc = 0;
     this.dropMs = BASE_DROP_MS;
     this.running = true;
