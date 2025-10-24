@@ -151,7 +151,8 @@ export class Renderer {
 
   static drawGrid(p) {
     p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
-    p.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    // Darker grid lines so they are visible on light/transparent canvas background
+    p.ctx.strokeStyle = 'rgba(0,0,0,0.14)';
     for (let x = 0; x <= COLS; x++) {
       p.ctx.beginPath();
       p.ctx.moveTo(x * p.CELL + 0.5, 0);
