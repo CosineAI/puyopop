@@ -28,6 +28,9 @@
   const BASE_DROP_MS = 1600; // Start at half the speed (slower fall)
   const SPEED_UP_EVERY = 10;
   const SPEED_FACTOR = 0.85;
+  // Garbage animation timing
+  const GARBAGE_SEND_DELAY = 700;   // delay before garbage starts dropping on opponent
+  const GARBAGE_STEP_MS = 100;      // per-step fall speed for garbage animation
 
   function createGrid(w, h) {
     return Array.from({ length: h }, () => Array(w).fill(EMPTY));
@@ -336,30 +339,66 @@
     return moved;
   }
 
-  // Garbage mechanics
+  // Single-step gravity used for animated garbage falling
+  function gravityStep(p) {
+    let moved = false;
+    for (let y = ROWS - 2; y >= 0; y--) {
+      for (let x = 0; x < COLS; x++) {
+        if (p.grid[y][x] !== EMPTY && p.grid[y + 1][x] === EMPTY) {
+          p.grid[y + 1][x] = p.grid[y][x];
+          p.grid[y][x] = EMPTY;
+          moved = true;
+        }
+      }
+    }
+    return moved;
+  }
+
+  // Garbage mechanics (animated slow drop)
   function applyGarbage(p, count) {
     if (count <= 0) return;
-    for (let i = 0; i < count; i++) {
+
+    let remaining = count;
+
+    function placeOne() {
+      if (remaining <= 0) {
+        draw(p);
+        return;
+      }
+      // Choose a column with an empty top cell
       let x = (Math.random() * COLS) | 0;
-      let placed = false;
+      let placedIdx = -1;
       for (let t = 0; t < COLS; t++) {
         const xi = (x + t) % COLS;
         if (p.grid[0][xi] === EMPTY) {
-          p.grid[0][xi] = GARBAGE;
-          placed = true;
+          placedIdx = xi;
           break;
         }
       }
-      if (!placed) {
+      if (placedIdx === -1) {
+        // No room at the top – game over for target
         endGame(p);
-        break;
+        return;
       }
+
+      // Place a single garbage block at the top
+      p.grid[0][placedIdx] = GARBAGE;
+      draw(p);
+
+      // Animate its fall by stepping gravity
+      const timer = setInterval(() => {
+        const moved = gravityStep(p);
+        draw(p);
+        if (!moved) {
+          clearInterval(timer);
+          remaining--;
+          // Small delay between pieces
+          setTimeout(placeOne, GARBAGE_STEP_MS);
+        }
+      }, GARBAGE_STEP_MS);
     }
-    let moved;
-    do {
-      moved = gravity(p);
-    } while (moved);
-    draw(p);
+
+    placeOne();
   }
 
   function sendGarbage(sender, amount) {
@@ -367,9 +406,10 @@
     if (!target || target.gameOver) return;
     target.incomingGarbage += amount;
     setTimeout(() => {
-      applyGarbage(target, target.incomingGarbage);
+      const count = target.incomingGarbage;
       target.incomingGarbage = 0;
-    }, 300);
+      applyGarbage(target, count);
+    }, GARBAGE_SEND_DELAY);
   }
 
   function resolveBoard(p) {

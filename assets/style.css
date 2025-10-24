@@ -10,11 +10,30 @@ body {
   height: 100vh;
   font-family: system-ui, sans-serif;
   margin: 0;
-  background: linear-gradient(120deg, #f8fafc 70%, #e7eaf2 100%);
   color: #222;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  /* Kawaii pastel rainbow background with subtle gradients */
+  background:
+    radial-gradient(1200px 800px at 20% 0%, rgba(255,235,240,0.7) 0%, rgba(255,235,240,0.35) 35%, rgba(255,235,240,0.15) 70%, rgba(255,235,240,0.05) 100%),
+    conic-gradient(from 180deg at 50% 50%, #ffd1dc, #ffe8a3, #b8ffb3, #a3e8ff, #d1a3ff, #ffd1dc);
+  background-attachment: fixed;
+}
+
+/* Pixelly overlay grid for bonus aesthetic */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(0deg, rgba(255,255,255,0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.25) 1px, transparent 1px);
+  background-size: 20px 20px;
+  mix-blend-mode: soft-light;
+  opacity: 0.45;
 }
 
 header {
@@ -31,10 +50,13 @@ main {
   max-width: 100vw;
   width: 100%;
   margin: 2.2rem auto 0 auto;
-  background: #fff;
+  background: rgba(255,255,255,0.72); /* softer white */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   padding: 2.0rem 2.0rem 2.0rem;
   border-radius: 18px;
-  box-shadow: 0 6px 32px 0 rgba(42,54,96,0.07), 0 1.5px 6px 0 rgba(0,0,0,0.03);
+  border: 1px solid rgba(255,255,255,0.38);
+  box-shadow: 0 6px 32px 0 rgba(42,54,96,0.06), 0 1.5px 6px 0 rgba(0,0,0,0.025);
   display: flex;
   flex-direction: column;
   justify-content: center;
