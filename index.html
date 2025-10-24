@@ -3,15 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Static Site</title>
+  <title>Puyo Pop Clone</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <main>
-    <h1>Welcome to Your Static Site</h1>
+    <h1 style="text-align:center;margin-top:0;">Puyo Pop Clone</h1>
+    <section class="game-wrap">
+      <canvas id="game" width="288" height="576" aria-label="Puyo game board"></canvas>
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="row">
+            <div>
+              <div class="label">Score</div>
+              <div id="score" class="value">0</div>
+            </div>
+            <div>
+              <div class="label">Chains</div>
+              <div id="chains" class="value">0</div>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Speed</div>
+              <div id="speed" class="value">1x</div>
+            </div>
+            <div>
+              <div class="label">Lines</div>
+              <div id="lines" class="value">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="label">Next</div>
+          <canvas id="next" width="96" height="96" aria-label="Next pair preview"></canvas>
+        </div>
+
+        <div class="panel controls">
+          <div class="label">Controls</div>
+          <ul>
+            <li>Left/Right: Move</li>
+            <li>Down: Soft drop</li>
+            <li>Z/X or Up: Rotate</li>
+            <li>Space: Hard drop</li>
+            <li>R: Restart</li>
+          </ul>
+          <button id="startBtn">Start / Restart</button>
+        </div>
+      </aside>
+    </section>
   </main>
   <footer>
-    <p>&copy; 2025 Your Name</p>
+    <p>&copy; 2025 Puyo Pop Clone</p>
   </footer>
   <script src="assets/script.js"></script>
 </body>
