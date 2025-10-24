@@ -8,6 +8,8 @@
   const ROWS = 12;
   const COLORS = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#a55eea'];
   const EMPTY = 0;
+  const GARBAGE = -1;
+  const GARBAGE_COLOR = "#69707b";
 
   // Timing
   const BASE_DROP_MS = 800;
@@ -69,6 +71,7 @@
       gameOver: false,
       score: 0,
       totalCleared: 0,
+      incomingGarbage: 0,
       chainShown: 0
     };
   }
@@ -186,7 +189,158 @@
     return moved;
   }
 
+  // Garbage mechanics
+  function applyGarbage(p, count) {
+    if (count <= 0) return;
+    for (let i = 0; i < count; i++) {
+      let x = (Math.random() * COLS) | 0;
+      let placed = false;
+      for (let t = 0; t < COLS; t++) {
+        const xi = (x + t) % COLS;
+        if (p.grid[0][xi] === EMPTY) {
+          p.grid[0][xi] = GARBAGE;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        // No room at the top row in any column -> overflow
+        endGame(p);
+        break;
+      }
+    }
+    // settle garbage
+    let moved;
+    do {
+      moved = gravity(p);
+    } while (moved);
+    draw(p);
+  }
+
+  function sendGarbage(sender, amount) {
+    const target = sender.enemy;
+    if (!target || target.gameOver) return;
+    target.incomingGarbage += amount;
+    // deliver after short delay to simulate travel
+    setTimeout(() => {
+      applyGarbage(target, target.incomingGarbage);
+      target.incomingGarbage = 0;
+    }, 300);
+  }
+
   function resolveBoard(p) {
+    let totalChain = 0;
+    let totalThisLock = 0;
+    let speedLines = 0;
+    let garbageToSend = 0;
+
+    function findGroups() {
+      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+      const groups = [];
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const color = p.grid[y][x];
+          if (color === EMPTY || color === GARBAGE || visited[y][x]) continue;
+          const stack = [{ x, y }];
+          const cells = [];
+          visited[y][x] = true;
+          while (stack.length) {
+            const { x: cx, y: cy } = stack.pop();
+            cells.push({ x: cx, y: cy });
+            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+            for (const [dx, dy] of dirs) {
+              const nx = cx + dx, ny = cy + dy;
+              if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
+              if (visited[ny][nx]) continue;
+              if (p.grid[ny][nx] === color) {
+                visited[ny][nx] = true;
+                stack.push({ x: nx, y: ny });
+              }
+            }
+          }
+          if (cells.length >= 4) groups.push(cells);
+        }
+      }
+      return groups;
+    }
+
+    function clearGroups(groups) {
+      let cleared = 0;
+      const toClearGarbage = new Set();
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+
+      for (const g of groups) {
+        for (const { x, y } of g) {
+          // clear colored puyo
+          p.grid[y][x] = EMPTY;
+          cleared++;
+          // mark adjacent garbage to clear
+          for (const [dx, dy] of dirs) {
+            const nx = x + dx, ny = y + dy;
+            if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
+            if (p.grid[ny][nx] === GARBAGE) {
+              toClearGarbage.add(ny * COLS + nx);
+            }
+          }
+        }
+      }
+      // clear adjacent garbage (doesn't count toward 'cleared')
+      for (const key of toClearGarbage) {
+        const nx = key % COLS;
+        const ny = Math.floor(key / COLS);
+        p.grid[ny][nx] = EMPTY;
+      }
+
+      return cleared;
+    }
+
+    function chainScore(chainIndex, cleared) {
+      const chainBonus = Math.pow(2, Math.max(0, chainIndex - 1));
+      return cleared * 10 * chainBonus;
+    }
+
+    function settleAll() {
+      let moved;
+      do {
+        moved = gravity(p);
+      } while (moved);
+    }
+
+    settleAll();
+    draw(p);
+
+    (function loopChain() {
+      const groups = findGroups();
+      if (groups.length === 0) {
+        p.score += totalThisLock;
+        p.chainShown = totalChain;
+        p.totalCleared += speedLines;
+        updateHud(p);
+
+        const stages = Math.floor(p.totalCleared / SPEED_UP_EVERY);
+        p.dropMs = BASE_DROP_MS * Math.pow(SPEED_FACTOR, stages);
+
+        // send garbage to opponent after chain resolves
+        if (garbageToSend > 0) {
+          sendGarbage(p, garbageToSend);
+        }
+
+        if (!p.gameOver) spawn(p);
+        return;
+      }
+      totalChain++;
+      const cleared = clearGroups(groups);
+      garbageToSend += Math.max(0, Math.floor(cleared / 4) + (totalChain - 1));
+      totalThisLock += chainScore(totalChain, cleared);
+      speedLines += cleared;
+      draw(p);
+      setTimeout(() => {
+        gravity(p);
+        draw(p);
+        setTimeout(loopChain, 120);
+      }, 160);
+    })();
+  }
     let totalChain = 0;
     let totalThisLock = 0;
     let speedLines = 0;
@@ -290,14 +444,12 @@
       p.ctx.stroke();
     }
 
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        const c = p.grid[y][x];
-        if (c !== EMPTY) {
-          drawCell(p.ctx, x * p.CELL + 2, y * p.CELL + 2, c, p.CELL - 3);
-        }
-      }
-    }
+    for (let y = 0;  << ROWS; y++) {
+      for (let x = 0;  << COLS; x++) {
+        const cell = p.grid[y][x];
+        if (cell !== EMPTY) {
+          const color = cell === GARBAGE ? GARBAGE_COLOR : cell;
+          drawCell(p.ctx }
   }
 
   function drawActive(p) {
@@ -336,6 +488,9 @@
   const p1 = makePlayer(1);
   const p2 = makePlayer(2);
   const players = [p1, p2];
+
+  p1.enemy = p2;
+  p2.enemy = p1;
 
   function resetPlayer(p) {
     p.grid = createGrid(COLS, ROWS);
