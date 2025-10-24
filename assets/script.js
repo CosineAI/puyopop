@@ -256,6 +256,7 @@
   function endGame(p) {
     p.running = false;
     p.gameOver = true;
+    handleGameOver(p);
   }
 
   function rotate(p, dir) {
@@ -595,6 +596,55 @@
   p2.enemy = p1;
   const players = [p1, p2];
 
+  // Overlay helpers
+  function showGameOverlay(playerId, text) {
+    const parent = document.getElementById(`player${playerId}`);
+    if (!parent) return;
+    let ov = parent.querySelector('.gameover-overlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.className = 'gameover-overlay';
+      const txt = document.createElement('div');
+      txt.className = 'gameover-text';
+      ov.appendChild(txt);
+      parent.appendChild(ov);
+    }
+    const txt = ov.querySelector('.gameover-text');
+    txt.textContent = text;
+    ov.style.display = 'flex';
+  }
+  function hideGameOverlay(playerId) {
+    const parent = document.getElementById(`player${playerId}`);
+    if (!parent) return;
+    const ov = parent.querySelector('.gameover-overlay');
+    if (ov) ov.style.display = 'none';
+  }
+  function clearAllOverlays() {
+    hideGameOverlay(1);
+    hideGameOverlay(2);
+  }
+
+  // Handle game over + award win
+  function handleGameOver(loser) {
+    if (playersMode === 2) {
+      const winner = loser === p1 ? p2 : p1;
+      const winnerWasDown = !!winner.gameOver;
+      // Freeze winner as well
+      winner.running = false;
+      winner.gameOver = true;
+
+      showGameOverlay(loser.id, 'Game Over');
+      // If winner already down before this call, it's a draw; else winner
+      if (winnerWasDown) {
+        showGameOverlay(winner.id, 'Draw');
+      } else {
+        showGameOverlay(winner.id, 'Winner!');
+      }
+    } else {
+      showGameOverlay(loser.id, 'Game Over');
+    }
+  }
+
   // Player mode control (1P/2P)
   let playersMode = 2;
 
@@ -631,6 +681,7 @@
   }
 
   function resetByMode() {
+    clearAllOverlays();
     if (playersMode === 1) {
       resetPlayer(p1);
       p2.running = false;
