@@ -115,6 +115,12 @@ footer {
   overflow: hidden; /* prevent off-screen overflow within each half */
 }
 
+/* Hide player column content but preserve its layout space */
+.player.hidden-player {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .player-inner {
   height: 100%;
   display: flex;

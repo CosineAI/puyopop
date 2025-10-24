@@ -595,6 +595,76 @@
   p2.enemy = p1;
   const players = [p1, p2];
 
+  // Player mode control (1P/2P)
+  let playersMode = 2;
+
+  function applyModeUI() {
+    const p2El = document.getElementById('player2');
+    if (!p2El) return;
+    if (playersMode === 1) {
+      p2El.classList.add('hidden-player');
+    } else {
+      p2El.classList.remove('hidden-player');
+    }
+  }
+
+  function setMode(count) {
+    playersMode = count;
+    if (count === 1) {
+      // Disable Player 2 logic and unlink enemies
+      p2.running = false;
+      p2.gameOver = true;
+      p2.active = null;
+      p2.acc = 0;
+      p1.enemy = null;
+      p2.enemy = null;
+    } else {
+      // Re-enable link; start happens on reset
+      p2.gameOver = false;
+      p1.enemy = p2;
+      p2.enemy = p1;
+    }
+    applyModeUI();
+    resize();
+    drawPreview(p1); drawPreview(p2);
+    draw(p1); draw(p2);
+  }
+
+  function resetByMode() {
+    if (playersMode === 1) {
+      resetPlayer(p1);
+      p2.running = false;
+      p2.gameOver = true;
+      p2.active = null;
+      p2.acc = 0;
+      p1.enemy = null;
+      p2.enemy = null;
+    } else {
+      players.forEach(resetPlayer);
+      p1.enemy = p2;
+      p2.enemy = p1;
+    }
+    resize();
+    drawPreview(p1); drawPreview(p2);
+    draw(p1); draw(p2);
+  }
+
+  // Mode toggle UI
+  const mode1Radio = document.getElementById('mode1p');
+  const mode2Radio = document.getElementById('mode2p');
+  if (mode1Radio) {
+    mode1Radio.addEventListener('change', (e) => {
+      if (e.target.checked) setMode(1);
+    });
+  }
+  if (mode2Radio) {
+    mode2Radio.addEventListener('change', (e) => {
+      if (e.target.checked) setMode(2);
+    });
+  }
+  // Initialize mode from UI
+  setMode(mode2Radio && mode2Radio.checked ? 2 : 1);
+
   function resetPlayer(p) {
     p.grid = createGrid(COLS, ROWS);
     p.active = null;
@@ -611,10 +681,8 @@
   }
 
   function resetBoth() {
-    players.forEach(resetPlayer);
-    resize();
-    drawPreview(p1); drawPreview(p2);
-    draw(p1); draw(p2);
+    // Deprecated: use resetByMode()
+    resetByMode();
   }
 
   let last = 0;
@@ -677,8 +745,8 @@
     if (e.code === 'KeyR') {
       const btn = document.getElementById('startBtn');
       if (btn) btn.blur();
-      resetBoth();
-    }
+      resetByMode();
+  }
   });
   window.addEventListener('keyup', e => {
     if (e.code === 'Space') e.preventDefault();
@@ -689,7 +757,7 @@
   if (startBtn) {
     startBtn.addEventListener('click', () => {
       startBtn.blur();
-      resetBoth();
+      resetByMode();
     });
   }
 
