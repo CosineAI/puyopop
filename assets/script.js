@@ -229,6 +229,18 @@
       return cleared * 10 * chainBonus;
     }
 
+    function settleAll() {
+      // Ensure newly locked halves separate and fall on uneven surfaces
+      let moved;
+      do {
+        moved = gravity();
+      } while (moved);
+    }
+
+    // First settle everything so unsupported halves drop immediately
+    settleAll();
+    draw();
+
     // iterative chain resolution
     (function loopChain() {
       const groups = findGroups();
