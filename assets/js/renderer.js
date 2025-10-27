@@ -212,6 +212,9 @@ export class Renderer {
   }
 
   static drawPreview(p) {
+    // Guard: if nextPair isn't ready yet (e.g., before reset), skip drawing
+    if (!p.nextPair) return;
+
     p.pctx.clearRect(0, 0, p.preview.width, p.preview.height);
     const size = Math.floor(p.preview.width / 3);
     // Center for P1, right-align for P2 to match the 'Next' label alignment

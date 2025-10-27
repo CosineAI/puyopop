@@ -36,11 +36,8 @@ export class GameManager {
     this.bindInputs();
     this.bindUI();
     this.resize();
-    Renderer.updateHud(this.p1); Renderer.updateHud(this.p2);
-    Renderer.drawPreview(this.p1); Renderer.drawPreview(this.p2);
-    Renderer.draw(this.p1); Renderer.draw(this.p2);
 
-    // Auto-start so the game begins immediately
+    // Initialize game state before any draw calls so previews exist
     this.resetByMode();
 
     window.addEventListener('resize', () => {
