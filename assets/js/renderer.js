@@ -214,7 +214,10 @@ export class Renderer {
   static drawPreview(p) {
     p.pctx.clearRect(0, 0, p.preview.width, p.preview.height);
     const size = Math.floor(p.preview.width / 3);
-    const startX = size;
+    // Center for P1, right-align for P2 to match the 'Next' label alignment
+    const startX = (p.id === 2)
+      ? Math.max(0, p.preview.width - size - 2)
+      : size;
     const startY = size / 2;
     Renderer.drawCell(p.pctx, startX, startY, p.nextPair.a, size, p.manager.animTimeMs);
     Renderer.drawCell(p.pctx, startX, startY + size + 4, p.nextPair.b, size, p.manager.animTimeMs);
@@ -233,32 +236,4 @@ export class Renderer {
   }
 }
 
-  static draw(p) {
-    Renderer.drawGrid(p);
-    Renderer.drawActive(p);
-  }
-}
-    p.ctx.restore();
-  }
-
-  static drawPreview(p) {
-    p.pctx.clearRect(0, 0, p.preview.width, p.preview.height);
-    const size = Math.floor(p.preview.width / 3);
-    const startX = size;
-    const startY = size / 2;
-    Renderer.drawCell(p.pctx, startX, startY, p.nextPair.a, size, p.manager.animTimeMs);
-    Renderer.drawCell(p.pctx, startX, startY + size + 4, p.nextPair.b, size, p.manager.animTimeMs);
-  }
-
-  static updateHud(p) {
-    p.hud.score.textContent = String(p.score);
-    p.hud.chains.textContent = String(p.chainShown);
-    p.hud.speed.textContent = `${(1600 / p.dropMs).toFixed(1)}x`;
-    p.hud.lines.textContent = String(p.totalCleared);
-  }
-
-  static draw(p) {
-    Renderer.drawGrid(p);
-    Renderer.drawActive(p);
-  }
-}
+  

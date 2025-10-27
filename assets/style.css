@@ -234,6 +234,12 @@ footer {
   box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06);
 }
 
+/* Align Player 2 preview canvas to the right to match the 'Next' label alignment */
+.player.right #next2 {
+  display: block;
+  margin-left: auto;
+}
+
 /* Bottom HUD overlay centered per player */
 .hud {
   position: absolute;
