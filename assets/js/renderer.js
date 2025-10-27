@@ -1,6 +1,7 @@
 // Rendering
 
 import { EMPTY, GARBAGE_COLOR, EYE_STYLE_BY_COLOR, COLS, ROWS } from './constants.js';
+import { offsetsForOri } from './utils.js';
 
 export class Renderer {
   static drawCell(g, x, y, color, size, animTimeMs) {
@@ -151,7 +152,19 @@ export class Renderer {
 
   static drawGrid(p) {
     p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
-    p.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+
+    // Ensure default compositing on every frame
+    p.ctx.globalCompositeOperation = 'source-over';
+    p.ctx.globalAlpha = 1;
+
+    // Light base fill so falling pieces have consistent contrast
+    p.ctx.save();
+    p.ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    p.ctx.fillRect(0, 0, p.canvas.width, p.canvas.height);
+    p.ctx.restore();
+
+    // Grid lines
+    p.ctx.strokeStyle = 'rgba(0,0,0,0.14)';
     for (let x = 0; x <= COLS; x++) {
       p.ctx.beginPath();
       p.ctx.moveTo(x * p.CELL + 0.5, 0);
@@ -179,19 +192,32 @@ export class Renderer {
     if (!p.active) return;
     const { x, y, ori, a, b } = p.active;
     const cells = [{ x, y, color: a }];
-    const { ox, oy } = (function(o){switch(o&3){case 0:return{ox:0,oy:-1};case 1:return{ox:1,oy:0};case 2:return{ox:0,oy:1};case 3:return{ox:-1,oy:0};}})(ori);
+    const { ox, oy } = offsetsForOri(ori);
     cells.push({ x: x + ox, y: y + oy, color: b });
+
+    // Ensure we draw over everything with full opacity
+    p.ctx.save();
+    p.ctx.globalAlpha = 1;
+    p.ctx.globalCompositeOperation = 'source-over';
+
     for (const c of cells) {
-      if (c.y >= 0) {
-        Renderer.drawCell(p.ctx, c.x * p.CELL + 2, c.y * p.CELL + 2, c.color, p.CELL - 3, p.manager.animTimeMs);
-      }
+      const sx = c.x * p.CELL + 2;
+      const sy = c.y * p.CELL + 2;
+      Renderer.drawCell(p.ctx, sx, sy, c.color, p.CELL - 3, p.manager.animTimeMs);
     }
+    p.ctx.restore();
   }
 
   static drawPreview(p) {
+    // Guard: if nextPair isn't ready yet (e.g., before reset), skip drawing
+    if (!p.nextPair) return;
+
     p.pctx.clearRect(0, 0, p.preview.width, p.preview.height);
     const size = Math.floor(p.preview.width / 3);
-    const startX = size;
+    // Center for P1, right-align for P2 to match the 'Next' label alignment
+    const startX = (p.id === 2)
+      ? Math.max(0, p.preview.width - size - 2)
+      : size;
     const startY = size / 2;
     Renderer.drawCell(p.pctx, startX, startY, p.nextPair.a, size, p.manager.animTimeMs);
     Renderer.drawCell(p.pctx, startX, startY + size + 4, p.nextPair.b, size, p.manager.animTimeMs);
@@ -209,3 +235,5 @@ export class Renderer {
     Renderer.drawActive(p);
   }
 }
+
+  

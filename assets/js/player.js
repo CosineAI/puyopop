@@ -57,7 +57,8 @@ export class Player {
 
   spawn() {
     const pair = this.manager.getPair(this.spawnCount);
-    this.active = { x: 2, y: -1, a: pair.a, b: pair.b, ori: 0 };
+    // Start one cell visible on first frame
+    this.active = { x: 2, y: 0, a: pair.a, b: pair.b, ori: 0 };
     if (this.collides(this.active.x, this.active.y, this.active.ori)) {
       this.manager.endGame(this);
       return;
