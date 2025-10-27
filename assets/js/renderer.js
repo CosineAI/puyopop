@@ -203,9 +203,6 @@ export class Renderer {
     for (const c of cells) {
       const sx = c.x * p.CELL + 2;
       const sy = c.y * p.CELL + 2;
-      // Fallback block fill to guarantee visibility even if gradients/paths fail
-      p.ctx.fillStyle = c.color;
-      p.ctx.fillRect(sx, sy, p.CELL - 3, p.CELL - 3);
       Renderer.drawCell(p.ctx, sx, sy, c.color, p.CELL - 3, p.manager.animTimeMs);
     }
     p.ctx.restore();
